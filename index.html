@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real Zaza Checker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1B3A2F;
+    --green-mid: #2a5a46;
+    --green-light: #e8f0ec;
+    --white: #ffffff;
+    --cream: #f7f5f0;
+    --text: #1B3A2F;
+    --muted: #6b8a7a;
+    --radius: 14px;
+    --check-unchecked: #d4e2db;
+  }
+
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 28px 24px 24px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(27,58,47,0.10);
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .heading {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: clamp(22px, 5vw, 28px);
+    font-weight: 400;
+    line-height: 1.2;
+    color: var(--green);
+    margin-bottom: 6px;
+  }
+
+  .heading em {
+    font-style: italic;
+    color: var(--green-mid);
+  }
+
+  .subtext {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin-bottom: 22px;
+    line-height: 1.5;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: var(--green-light);
+    border-radius: 99px;
+    height: 6px;
+    margin-bottom: 22px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--green);
+    border-radius: 99px;
+    transition: width 0.4s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+
+  /* Checklist items */
+  .checks {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--cream);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .check-item:hover {
+    background: var(--green-light);
+    transform: translateY(-1px);
+  }
+
+  .check-item:active {
+    transform: scale(0.98);
+  }
+
+  .check-item.checked {
+    background: var(--green-light);
+    border-color: var(--green);
+  }
+
+  .check-box {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    border-radius: 8px;
+    background: var(--check-unchecked);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .check-item.checked .check-box {
+    background: var(--green);
+    transform: scale(1.08);
+  }
+
+  .check-box svg {
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.2s, transform 0.25s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .check-item.checked .check-box svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .check-label {
+    flex: 1;
+  }
+
+  .check-label strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--green);
+    margin-bottom: 2px;
+  }
+
+  .check-label span {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .check-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 99px;
+    background: var(--check-unchecked);
+    color: var(--muted);
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .check-item.checked .check-badge {
+    background: var(--green);
+    color: var(--white);
+  }
+
+  /* Result area */
+  .result {
+    border-radius: var(--radius);
+    padding: 18px;
+    text-align: center;
+    transition: opacity 0.3s, transform 0.3s;
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .result.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .result.fail {
+    background: #fef6f0;
+    border: 1.5px solid #f5c5a3;
+  }
+
+  .result.partial {
+    background: #fdf9ec;
+    border: 1.5px solid #e8d98a;
+  }
+
+  .result.pass {
+    background: var(--green-light);
+    border: 1.5px solid var(--green);
+  }
+
+  .result-emoji {
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .result-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--green);
+  }
+
+  .result-sub {
+    font-size: 12.5px;
+    color: var(--muted);
+    max-width: 300px;
+    line-height: 1.5;
+  }
+
+  .result-cta {
+    display: inline-block;
+    margin-top: 10px;
+    background: var(--green);
+    color: var(--white);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 20px;
+    border-radius: 99px;
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .result-cta:hover {
+    background: var(--green-mid);
+    transform: translateY(-1px);
+  }
+
+  /* Reset */
+  .reset-row {
+    text-align: center;
+    margin-top: 14px;
+    display: none;
+  }
+
+  .reset-row.visible { display: block; }
+
+  .reset-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    text-decoration: underline;
+    padding: 4px;
+  }
+
+  .reset-btn:hover { color: var(--green); }
+
+  /* Count */
+  .count-text {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: right;
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <p class="eyebrow">Zaza Verification</p>
+  <h2 class="heading">Is your flower <em>actually</em> Zaza?</h2>
+  <p class="subtext">Check off what your vendor provides. Real premium cannabis passes all three.</p>
+
+  <div class="progress-wrap">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <p class="count-text"><span id="countText">0 of 3 verified</span></p>
+
+  <div class="checks" id="checkList">
+
+    <div class="check-item" data-index="0" onclick="toggle(this)">
+      <div class="check-box">
+        <svg width="14" height="11" viewBox="0 0 14 11" fill="none">
+          <path d="M1.5 5.5L5.5 9.5L12.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="check-label">
+        <strong>Current COA on the product page</strong>
+        <span>Lab results dated within 90 days, with a matching batch number</span>
+      </div>
+      <span class="check-badge">Proof 1</span>
+    </div>
+
+    <div class="check-item" data-index="1" onclick="toggle(this)">
+      <div class="check-box">
+        <svg width="14" height="11" viewBox="0 0 14 11" fill="none">
+          <path d="M1.5 5.5L5.5 9.5L12.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="check-label">
+        <strong>20%+ THCa &amp; 2%+ terpenes</strong>
+        <span>Under 0.3% Delta-9 THC confirmed — federally compliant</span>
+      </div>
+      <span class="check-badge">Proof 2</span>
+    </div>
+
+    <div class="check-item" data-index="2" onclick="toggle(this)">
+      <div class="check-box">
+        <svg width="14" height="11" viewBox="0 0 14 11" fill="none">
+          <path d="M1.5 5.5L5.5 9.5L12.5 1.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="check-label">
+        <strong>Price in the $30-60/eighth range</strong>
+        <span>Too cheap = red flag. Too expensive = unnecessary markup</span>
+      </div>
+      <span class="check-badge">Proof 3</span>
+    </div>
+
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <div class="reset-row" id="resetRow">
+    <button class="reset-btn" onclick="resetAll()">Start over</button>
+  </div>
+</div>
+
+<script>
+  var checked = [false, false, false];
+
+  var results = {
+    0: {
+      cls: 'fail',
+      emoji: '🚩',
+      title: 'Not verified yet',
+      sub: 'Tick the boxes as you check your vendor. Real Zaza passes all three.',
+      cta: null
+    },
+    1: {
+      cls: 'partial',
+      emoji: '🤔',
+      title: 'One down — keep checking',
+      sub: 'One proof isn\'t enough. Verify the rest before you buy.',
+      cta: null
+    },
+    2: {
+      cls: 'partial',
+      emoji: '👀',
+      title: 'Almost there',
+      sub: 'Two proofs checked. One more and you\'ll know for sure.',
+      cta: null
+    },
+    3: {
+      cls: 'pass',
+      emoji: '✅',
+      title: 'That\'s the real Za',
+      sub: 'All three proofs confirmed. Shop verified THCa flower at Mood.',
+      cta: { label: 'Shop Mood Flower', href: 'https://mood.com/shop/product-category/flower' }
+    }
+  };
+
+  function toggle(el) {
+    var i = parseInt(el.getAttribute('data-index'));
+    checked[i] = !checked[i];
+    el.classList.toggle('checked', checked[i]);
+    update();
+  }
+
+  function update() {
+    var count = checked.filter(Boolean).length;
+    var pct = (count / 3) * 100;
+
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('countText').textContent = count + ' of 3 verified';
+
+    var r = results[count];
+    var el = document.getElementById('result');
+
+    el.className = 'result ' + r.cls;
+    el.innerHTML =
+      '<div class="result-emoji">' + r.emoji + '</div>' +
+      '<div class="result-title">' + r.title + '</div>' +
+      '<div class="result-sub">' + r.sub + '</div>' +
+      (r.cta ? '<a class="result-cta" href="' + r.cta.href + '" target="_blank" rel="noopener">' + r.cta.label + '</a>' : '');
+
+    setTimeout(function() { el.classList.add('visible'); }, 10);
+
+    var resetRow = document.getElementById('resetRow');
+    if (count > 0) {
+      resetRow.classList.add('visible');
+    } else {
+      resetRow.classList.remove('visible');
+      el.classList.remove('visible');
+    }
+  }
+
+  function resetAll() {
+    checked = [false, false, false];
+    document.querySelectorAll('.check-item').forEach(function(el) {
+      el.classList.remove('checked');
+    });
+    update();
+  }
+</script>
+
+</body>
+</html>
